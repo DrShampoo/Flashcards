@@ -22,7 +22,7 @@ public class Main {
             if (str.equals(cardDef[i]))
                 System.out.println("Correct answer");
             else
-                System.out.println("Wrong answer. The correct one is\"" + cardDef[i] + "\".");
+                System.out.println("Wrong answer. The correct one is  \"" + cardDef[i] + "\".");
         }
 
 
