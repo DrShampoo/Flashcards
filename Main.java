@@ -73,7 +73,8 @@ public class Main {
 
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNext()) {
-                map.put(scanner.next(), scanner.next());
+                String[] line = scanner.nextLine().split(",");
+                map.put(line[0], line[1]);
                 count++;
             }
             System.out.println(count + " cards have been loaded.");
@@ -89,7 +90,7 @@ public class Main {
 
         try (FileWriter writer = new FileWriter(file)) {
             for (Map.Entry<String, String> cards : map.entrySet()) {
-                writer.write(cards.getKey() + " " + cards.getValue() + "\n");
+                writer.write(cards.getKey() + "," + cards.getValue() + "\n");
                 count++;
             }
         } catch (IOException e) {
