@@ -4,52 +4,108 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.TreeMap;
+import java.util.*;
 
 public class Main {
     public static final Scanner scanner = new Scanner(System.in);
+    public static List<String> logList = new ArrayList<>();
+    public static Map<String, Integer> mapMistakes = new TreeMap<>();
+
+    public static void outputMsg(String line) {
+        logList.add(line);
+        System.out.println(line);
+    }
+
+    public static String inputMsg() {
+        String line = scanner.nextLine();
+        logList.add(line);
+        return line;
+    }
+
+    public static void saveMistakes(String card){
+        if (mapMistakes.containsKey(card))
+            mapMistakes.put(card, mapMistakes.get(card) + 1);
+        else
+            mapMistakes.put(card, 1);
+    }
+
+    public static void hardestCard(){
+        StringBuilder errorsCards = new StringBuilder();
+        int errors = 0;
+        if (mapMistakes.isEmpty())
+            outputMsg("There are no cards with errors.");
+        else {
+            for (Map.Entry<String, Integer> cards : mapMistakes.entrySet()){
+                if (cards.getValue() > errors) errors = cards.getValue();
+            }
+            for (Map.Entry<String, Integer> card : mapMistakes.entrySet()){
+                if (card.getValue() == errors) errorsCards.append(", \"").append(card.getKey()).append("\"");
+            }
+            outputMsg("The hardest card is" + errorsCards.toString().replaceFirst(",", "") +", "
+                    + errors);
+        }
+    }
+
+    public static void resetStats(){
+        mapMistakes.clear();
+        outputMsg("Card statistics has been reset.");
+    }
+
+    public static void exportLog() {
+        outputMsg("File name:");
+        File file = new File(inputMsg());
+
+        try (FileWriter writer = new FileWriter(file)) {
+            outputMsg("The log has been saved.");
+            for (String log : logList)
+                writer.write(log + "\n");
+        } catch (IOException e) {
+            e.getMessage();
+        }
+    }
 
     public static void addCard(Map<String, String> map) {
-        System.out.println("The card:");
-        String card = scanner.nextLine();
+        outputMsg("The card:");
+        String card = inputMsg();
         if (map.containsKey(card)) {
-            System.out.println("The card \"" + card + "\" already exists.");
+            outputMsg("The card \"" + card + "\" already exists.");
         } else {
-            System.out.println("The definition of the card:");
-            String cardDef = scanner.nextLine();
+            outputMsg("The definition of the card:");
+            String cardDef = inputMsg();
             if (map.containsValue(cardDef)) {
-                System.out.println("The definition \"" + cardDef + "\" already exists.");
+                outputMsg("The definition \"" + cardDef + "\" already exists.");
             } else {
                 map.put(card, cardDef);
-                System.out.println(String.format("The pair (\"%s\":\"%s\") has been added.", card, cardDef));
+                outputMsg(String.format("The pair (\"%s\":\"%s\") has been added.", card, cardDef));
             }
         }
     }
 
     public static void askCard(Map<String, String> map) {
-        System.out.println("How many times to ask?");
-        int number = Integer.parseInt(scanner.nextLine());
+        outputMsg("How many times to ask?");
+        int number = Integer.parseInt(inputMsg());
         int count = 0;
         boolean flag = true;
 
-        while(flag) {
+        while (flag) {
             for (Map.Entry<String, String> card : map.entrySet()) {
-                System.out.println("Print the definition of \"" + card.getKey() + "\":");
-                String str = scanner.nextLine();
+                outputMsg("Print the definition of \"" + card.getKey() + "\":");
+                String str = inputMsg();
                 if (!card.getValue().equals(str) && map.containsValue(str)) {
+                    saveMistakes(card.getKey());
                     for (Map.Entry<String, String> entry : map.entrySet()) {
-                        if (str.equals(entry.getValue()))
-                            System.out.println("Wrong answer. The correct one is \"" + card.getValue() + "\"," +
+                        if (str.equals(entry.getValue())) {
+                            outputMsg("Wrong answer. The correct one is \"" + card.getValue() + "\"," +
                                     " you've just written the definition of \"" + entry.getKey() + "\".");
+                        }
                     }
-                } else if (!card.getValue().equals(str) && !map.containsValue(str))
-                    System.out.println("Wrong answer. The correct one is \"" + card.getValue() + "\".");
-                else
-                    System.out.println("Correct answer.");
+                } else if (!card.getValue().equals(str) && !map.containsValue(str)) {
+                    saveMistakes(card.getKey());
+                    outputMsg("Wrong answer. The correct one is \"" + card.getValue() + "\".");
+                } else
+                    outputMsg("Correct answer.");
                 count++;
-                if (count == number){
+                if (count == number) {
                     flag = false;
                     break;
                 }
@@ -58,45 +114,51 @@ public class Main {
     }
 
     public static void removeCard(Map<String, String> map) {
-        System.out.println("The card:");
-        String card = scanner.nextLine();
+        outputMsg("The card:");
+        String card = inputMsg();
         if (map.containsKey(card)) {
             map.remove(card);
-            System.out.println("The card has been removed.");
-        } else System.out.println(String.format("Can't remove \"%s\": there is no such card.", card));
+            mapMistakes.remove(card);
+            outputMsg("The card has been removed.");
+        } else outputMsg(String.format("Can't remove \"%s\": there is no such card.", card));
     }
 
     public static void importFile(Map<String, String> map) {
-        System.out.println("File name:");
-        File file = new File(scanner.nextLine());
+        outputMsg("File name:");
+        File file = new File(inputMsg());
         int count = 0;
 
         try (Scanner scanner = new Scanner(file)) {
             while (scanner.hasNext()) {
-                String[] line = scanner.nextLine().split(",");
-                map.put(line[0], line[1]);
+                String lineCards = scanner.nextLine();
+                String[] cards = lineCards.split(":")[0].split(",");
+                int num = Integer.parseInt(lineCards.split(":")[1]);
+                map.put(cards[0], cards[1]);
+                if (num != 0)
+                    mapMistakes.put(cards[0], num);
                 count++;
             }
-            System.out.println(count + " cards have been loaded.");
+            outputMsg(count + " cards have been loaded.");
         } catch (FileNotFoundException e) {
-            System.out.println("File not found.");
+            outputMsg("File not found.");
         }
     }
 
     public static void exportFile(Map<String, String> map) {
-        System.out.println("File name:");
-        File file = new File(scanner.nextLine());
+        outputMsg("File name:");
+        File file = new File(inputMsg());
         int count = 0;
 
         try (FileWriter writer = new FileWriter(file)) {
             for (Map.Entry<String, String> cards : map.entrySet()) {
-                writer.write(cards.getKey() + "," + cards.getValue() + "\n");
+                writer.write(cards.getKey() + "," + cards.getValue() + ":" +
+                        mapMistakes.getOrDefault(cards.getKey(), 0) + "\n");
                 count++;
             }
         } catch (IOException e) {
             System.out.printf("An exception occurs %s", e.getMessage());
         }
-        System.out.println(count + " cards have been saved.");
+        outputMsg(count + " cards have been saved.");
     }
 
 
@@ -105,8 +167,8 @@ public class Main {
         boolean flag = true;
 
         while (flag) {
-            System.out.println("Input the action (add, remove, import, export, ask, exit):");
-            String action = scanner.nextLine();
+            outputMsg("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):");
+            String action = inputMsg();
             switch (action) {
                 case "add":
                     addCard(map);
@@ -124,12 +186,21 @@ public class Main {
                     askCard(map);
                     break;
                 case "exit":
-                    System.out.println("Bye bye!");
+                    outputMsg("Bye bye!");
                     flag = false;
                     scanner.close();
                     break;
+                case "log":
+                    exportLog();
+                    break;
+                case "hardest card":
+                    hardestCard();
+                    break;
+                case "reset stats":
+                    resetStats();
+                    break;
                 default:
-                    System.out.println("Unsuitable action, please, try again");
+                    outputMsg("Unsuitable action, please, try again");
             }
         }
     }
