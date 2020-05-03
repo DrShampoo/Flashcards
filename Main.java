@@ -161,10 +161,51 @@ public class Main {
         outputMsg(count + " cards have been saved.");
     }
 
+    public static void exportCards(String[] args, Map<String, String> map){
+        File file;
+        if (args[0].equals("-export"))
+            file = new File(args[1]);
+        else file = new File(args[3]);
+        int count = 0;
+
+        try(FileWriter writer = new FileWriter(file)) {
+            for (Map.Entry<String, String> cards : map.entrySet()) {
+                writer.write(cards.getKey() + "," + cards.getValue() + "\n");
+                count++;
+            }
+        } catch (IOException e) {
+            System.out.printf("An exception occurs %s", e.getMessage());
+        }
+        outputMsg(count + " cards have been saved.");
+    }
+
+    public static void importCards(String[] args, Map<String, String> map){
+        File file;
+        if (args[0].equals("-import")){
+            file = new File(args[1]);
+        }else file = new File(args[3]);
+        int count = 0;
+
+        try(Scanner scanner = new Scanner(file)){
+            while (scanner.hasNext()){
+                String[] cards = scanner.nextLine().split(",");
+                map.put(cards[0], cards[1]);
+                count++;
+            }
+            outputMsg(count + " cards have been loaded.");
+        }catch (FileNotFoundException e) {
+            outputMsg("File not found.");
+        }
+    }
+
 
     public static void main(String[] args) {
         Map<String, String> map = new TreeMap<>();
         boolean flag = true;
+        if (args.length == 4 && (args[0].equals("-import") || args[2].equals("-import")))
+            importCards(args, map);
+        else if (args.length == 2 && args[0].equals("-import"))
+            importCards(args, map);
 
         while (flag) {
             outputMsg("Input the action (add, remove, import, export, ask, exit, log, hardest card, reset stats):");
@@ -187,6 +228,10 @@ public class Main {
                     break;
                 case "exit":
                     outputMsg("Bye bye!");
+                    if (args.length == 4 && (args[0].equals("-export") || args[2].equals("-export")))
+                        exportCards(args, map);
+                    else if(args.length == 2 && args[0].equals("-export"))
+                        exportCards(args, map);
                     flag = false;
                     scanner.close();
                     break;
